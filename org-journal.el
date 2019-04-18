@@ -779,30 +779,33 @@ If no next/PREVious entry was found print MSG."
                               (not (string-match-p "\.gpg$" (file-truename file-path))))))))
     (seq-filter predicate file-list)))
 
+(defvar org-journal-dates nil)
+
 (defun org-journal-list-dates ()
   "Loads the list of files in the journal directory, and converts
 it into a list of calendar date elements."
-  (let ((dates (mapcar (if (org-journal-daily-p)
-                           #'org-journal-file-name->calendar-date
-                         #'org-journal-file->calendar-dates)
-                       (org-journal-list-files))))
-    ;; Need to flatten the list and bring dates in correct order.
-    (unless (org-journal-daily-p)
-      (let ((flattened-date-l '())
-            flattened-date-reverse-l file-dates)
-        (while dates
-          (setq file-dates (car dates))
-          (setq flattened-date-reverse-l '())
-          (while file-dates
-            (push (car file-dates) flattened-date-reverse-l)
-            (setq file-dates (cdr file-dates)))
-          ;; Correct order of journal entries from file by pushing it to a new list.
-          (mapc (lambda (p)
-                  (push p flattened-date-l))
-                flattened-date-reverse-l)
-          (setq dates (cdr dates)))
-        (setq dates (reverse flattened-date-l))))
-    dates))
+  (if org-journal-dates org-journal-dates
+    (let ((dates (mapcar (if (org-journal-daily-p)
+                             #'org-journal-file-name->calendar-date
+                           #'org-journal-file->calendar-dates)
+                         (org-journal-list-files))))
+      ;; Need to flatten the list and bring dates in correct order.
+      (unless(org-journal-daily-p)
+        (let ((flattened-date-l '())
+              flattened-date-reverse-l file-dates)
+          (while dates
+            (setq file-dates (car dates))
+            (setq flattened-date-reverse-l '())
+            (while file-dates
+              (push (car file-dates) flattened-date-reverse-l)
+              (setq file-dates (cdr file-dates)))
+            ;; Correct order of journal entries from file by pushing it to a new list.
+            (mapc (lambda (p)
+                    (push p flattened-date-l))
+                  flattened-date-reverse-l)
+            (setq dates (cdr dates)))
+          (setq dates (reverse flattened-date-l))))
+      (setq org-journal-dates dates))))
 
 ;;;###autoload
 (defun org-journal-mark-entries ()
